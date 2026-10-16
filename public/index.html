@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stranger Chat</title>
+    <style>
+        * { box-sizing: border-box; }
+        body { font-family: system-ui, sans-serif; background: #f0f2f5; display: flex; flex-direction: column; height: 100vh; margin: 0; }
+        header { background: #007bff; color: white; padding: 15px; font-weight: bold; display: flex; justify-content: space-between; }
+        #chat-box { flex: 1; padding: 15px; overflow-y: auto; background: #fff; display: flex; flex-direction: column; gap: 10px; }
+        .msg { max-width: 75%; padding: 10px 15px; border-radius: 18px; font-size: 16px; }
+        .msg img { max-width: 100%; border-radius: 8px; display: block; }
+        .system { background: #e4e6eb; color: #333; align-self: center; font-size: 13px; border-radius: 10px; padding: 5px 10px; }
+        .you { background: #007bff; color: white; align-self: flex-end; }
+        .stranger { background: #e4e6eb; color: black; align-self: flex-start; }
+        #controls { padding: 10px; display: flex; gap: 8px; background: #fff; border-top: 1px solid #ccc; align-items: center; }
+        input { flex: 1; padding: 12px; border: 1px solid #ccc; border-radius: 20px; font-size: 16px; outline: none; }
+        button { padding: 12px 18px; border: none; border-radius: 20px; font-weight: bold; cursor: pointer; }
+        #action-btn { background: #ff4757; color: white; }
+        #send-btn { background: #007bff; color: white; }
+        .cam-btn { background: #2ed573; color: white; padding: 10px; border-radius: 50%; width: 42px; height: 42px; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+    </style>
+</head>
+<body>
+    <header><span>💬 Random Chat</span><span id="online">Online: 1</span></header>
+    <div id="chat-box"><div class="system">Tap "Find Stranger" to match.</div></div>
+    <div id="controls">
+        <button id="action-btn" onclick="startSearch()">Find Stranger</button>
+        <label class="cam-btn">📷<input type="file" accept="image/*" style="display:none" onchange="sendImg(this)"></label>
+        <input type="text" id="msg" placeholder="Type a message..." disabled onkeypress="if(event.key==='Enter') sendTxt()">
+        <button id="send-btn" onclick="sendTxt()" disabled>Send</button>
+    </div>
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io(), box = document.getElementById('chat-box'), msg = document.getElementById('msg'), sendB = document.getElementById('send-btn'), actB = document.getElementById('action-btn');
+        let active = false;
+        function addMsg(val, type, isImg=false) {
+            const d = document.createElement('div'); d.className = `msg ${type}`;
+            if(isImg) { const i = document.createElement('img'); i.src = val; d.appendChild(i); }
+            else { d.innerText = val; }
+            box.appendChild(d); box.scrollTop = box.scrollHeight;
+        }
+        function startSearch() { socket.emit('find_stranger'); }
+        function sendTxt() { 
+            if(msg.value.trim() && active) { addMsg(msg.value, 'you'); socket.emit('send_message', msg.value); msg.value=''; }
+        }
+        function sendImg(el) {
+            if(!active || !el.files[0]) return;
+            const r = new FileReader(); r.onload = (e) => { addMsg(e.target.result, 'you', true); socket.emit('send_image', e.target.result); };
+            r.readAsDataURL(el.files[0]); el.value='';
+        }
+        socket.on('update_online_count', c => document.getElementById('online').innerText = `Online: ${c}`);
+        socket.on('waiting', () => { addMsg('Searching for a stranger...', 'system'); actB.innerText='Searching...'; });
+        socket.on('chat_start', () => { active = true; box.innerHTML=''; addMsg('Connected! Talk to the stranger.', 'system'); msg.disabled=false; sendB.disabled=false; actB.innerText='Next ➡️'; });
+        socket.on('receive_message', t => addMsg(t, 'stranger'));
+        socket.on('receive_image', img => addMsg(img, 'stranger', true));
+        socket.on('partner_disconnected', () => { active = false; msg.disabled=true; sendB.disabled=true; addMsg('Stranger left.', 'system'); actB.innerText='Find Stranger'; });
+    </script>
+</body>
+</html>
