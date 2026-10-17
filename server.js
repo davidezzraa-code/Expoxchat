@@ -43,16 +43,12 @@ io.on('connection', (socket) => {
 
     socket.on('request_friend', () => {
         let partnerId = activePairs[socket.id];
-        if (partnerId) {
-            io.to(partnerId).emit('friend_request_received');
-        }
+        if (partnerId) io.to(partnerId).emit('friend_request_received');
     });
 
     socket.on('deny_friend', () => {
         let partnerId = activePairs[socket.id];
-        if (partnerId) {
-            io.to(partnerId).emit('friend_request_denied');
-        }
+        if (partnerId) io.to(partnerId).emit('friend_request_denied');
     });
 
     socket.on('accept_friend', () => {
@@ -98,5 +94,8 @@ function disconnectFromPartner(socket) {
     }
 }
 
+// FIXED: Binds the server to Render's dynamic host port configuration
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+server.listen(PORT, "0.0.0.0", () => {
+    console.log(`Server running on port ${PORT}`);
+});
