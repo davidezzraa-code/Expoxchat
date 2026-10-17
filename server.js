@@ -4,9 +4,15 @@ const { Server } = require('socket.io');
 
 const app = express();
 const server = http.createServer(app);
+
+// FIXED: Completely open up connection access rules
 const io = new Server(server, { 
     maxHttpBufferSize: 1e7, 
-    cors: { origin: "*" } 
+    cors: { 
+        origin: "*",
+        methods: ["GET", "POST"],
+        credentials: true
+    } 
 });
 
 app.use(express.static(__dirname + '/public'));
@@ -94,8 +100,7 @@ function disconnectFromPartner(socket) {
     }
 }
 
-// FIXED: Binds the server to Render's dynamic host port configuration
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, "0.0.0.0", () => {
-    console.log(`Server running on port ${PORT}`);
+    console.log(`Server running`);
 });
