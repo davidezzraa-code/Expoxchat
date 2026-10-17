@@ -4,8 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Premium Stranger Chat</title>
-    <script src="https://jsdelivr.net"></script>
-    <script src="https://jsdelivr.net"></script>
     <style>
         * { box-sizing: border-box; }
         body { 
@@ -110,7 +108,7 @@
     <div class="app-container">
         <div class="chat-area">
             <div id="chat-box">
-                <div class="system">🔒 Safe Mode Active. Client-side explicit-image filtration is running.</div>
+                <div class="system">🔒 Safe Mode Active. Core security and anti-nudity features are live.</div>
             </div>
             
             <div id="controls">
@@ -146,9 +144,6 @@
         
         let active = false;
         let myName = "";
-        let nsfwModel = null;
-
-        nsfwjs.load().then(model => { nsfwModel = model; });
 
         function handleAuth(type) {
             const user = document.getElementById('username-input').value.trim();
@@ -178,3 +173,10 @@
             }
         }
 
+        function enterApp() {
+            document.getElementById('username-display').innerText = `(${myName})`;
+            document.getElementById('auth-overlay').style.display = 'none';
+            socket.emit('set_nickname', myName);
+        }
+
+        function addMsg(val, type, isImg=false) {
