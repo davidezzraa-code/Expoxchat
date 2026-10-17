@@ -41,7 +41,6 @@
         .btn-primary { background: #007bff; color: white; }
         .btn-secondary { background: #2a2a30; color: #a1a1aa; border: 1px solid #3a3a42; }
         .btn-guest { background: #10b981; color: white; margin-top: 15px !important; }
-        .auth-toggle { font-size: 13px; color: #a1a1aa; margin-top: 12px; cursor: pointer; text-decoration: underline; }
 
         header { 
             background: #1a1a1e; border-bottom: 1px solid #2a2a30;
@@ -86,11 +85,11 @@
 </head>
 <body>
 
-    <!-- AUTH SCREEN (SIGN IN / SIGN UP / GUEST) -->
+    <!-- AUTH SCREEN -->
     <div id="auth-overlay">
-        <div class="auth-card" id="login-box">
+        <div class="auth-card">
             <h2>⚡ Stranger Chat</h2>
-            <p id="auth-desc">Sign in to your private chat profile</p>
+            <p>Sign in, Create Profile, or Join Instantly</p>
             
             <input type="text" id="username-input" placeholder="Enter Username..." maxlength="15">
             <input type="password" id="password-input" placeholder="Enter Password...">
@@ -111,7 +110,7 @@
     <div class="app-container">
         <div class="chat-area">
             <div id="chat-box">
-                <div class="system">🔒 Safe Mode Active. Automated client-side anti-nudity filters are live.</div>
+                <div class="system">🔒 Safe Mode Active. Client-side explicit-image filtration is running.</div>
             </div>
             
             <div id="controls">
@@ -119,7 +118,7 @@
                 <button id="friend-btn" onclick="sendFriendRequest()">➕ Add Friend</button>
                 <label id="cam-label" class="cam-btn disabled">📷
                     <div id="safety-overlay">AI</div>
-                    <input type="file" id="file-uploader" accept="image/*" style="display:none" onchange="processImage(this)">
+                    <input type="file" accept="image/*" style="display:none" onchange="processImage(this)">
                 </label>
                 <input type="text" id="msg" placeholder="Type a message..." disabled onkeypress="if(event.key==='Enter') sendTxt()">
                 <button id="send-btn" onclick="sendTxt()" disabled>Send</button>
@@ -171,3 +170,11 @@
                 const savedPass = localStorage.getItem("chat_user_" + user);
                 
                 if(savedPass && savedPass === pass) {
+                    myName = user + " 🛡️";
+                    enterApp();
+                } else {
+                    alert("Wrong username or password.");
+                }
+            }
+        }
+
