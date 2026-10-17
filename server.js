@@ -1,4 +1,4 @@
-```javascript 
+```javascript
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
@@ -65,7 +65,14 @@ io.on('connection', (socket) => {
 
     socket.on('send_image', (imgData) => {
         let partnerId = activePairs[socket.id];
-        if (partnerId) io.to(partnerId).emit('receive_image', imgData);
+        if (!partnerId) return;
+
+        // Backend validation: Ensure data signature is a valid image type
+        if (imgData.includes("data:image/") && (imgData.includes("base64") || imgData.length < 5000000)) {
+            io.to(partnerId).emit('receive_image', imgData);
+        } else {
+            socket.emit('safety_alert', "🛡️ System Block: Invalid or restricted file payload layout.");
+        }
     });
 
     socket.on('disconnect', () => {
