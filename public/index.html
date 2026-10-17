@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Premium Stranger Chat</title>
-    <!-- Load TensorFlow.js and nsfwjs library for client-side content moderation -->
     <script src="https://jsdelivr.net"></script>
     <script src="https://jsdelivr.net"></script>
     <style>
@@ -19,23 +18,30 @@
             margin: 0; 
         }
 
-        #login-overlay {
+        /* Sign In / Sign Up Screen Overlay */
+        #auth-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: #121214; display: flex; flex-direction: column;
             justify-content: center; align-items: center; z-index: 9999; padding: 20px;
         }
-        .login-card {
+        .auth-card {
             background: #1a1a1e; border: 1px solid #2a2a30; padding: 30px;
             border-radius: 16px; width: 100%; max-width: 360px; text-align: center;
         }
-        .login-card input {
-            width: 100%; padding: 14px; background: #121214; border: 1px solid #3a3a42;
-            color: #fff; border-radius: 25px; margin: 15px 0; font-size: 16px; text-align: center; outline: none;
+        .auth-card h2 { margin: 0 0 5px 0; font-size: 24px; color: #007bff; }
+        .auth-card p { color: #a1a1aa; font-size: 13px; margin: 0 0 15px 0; }
+        .auth-card input {
+            width: 100%; padding: 12px; background: #121214; border: 1px solid #3a3a42;
+            color: #fff; border-radius: 25px; margin: 6px 0; font-size: 15px; text-align: center; outline: none;
         }
-        .login-card button {
-            width: 100%; padding: 14px; background: #007bff; color: white;
-            border: none; border-radius: 25px; font-weight: bold; font-size: 16px; cursor: pointer;
+        .auth-card button {
+            width: 100%; padding: 12px; border: none; border-radius: 25px; 
+            font-weight: bold; font-size: 15px; cursor: pointer; margin-top: 8px;
         }
+        .btn-primary { background: #007bff; color: white; }
+        .btn-secondary { background: #2a2a30; color: #a1a1aa; border: 1px solid #3a3a42; }
+        .btn-guest { background: #10b981; color: white; margin-top: 15px !important; }
+        .auth-toggle { font-size: 13px; color: #a1a1aa; margin-top: 12px; cursor: pointer; text-decoration: underline; }
 
         header { 
             background: #1a1a1e; border-bottom: 1px solid #2a2a30;
@@ -45,13 +51,8 @@
         .brand { display: flex; align-items: center; gap: 8px; font-size: 18px; }
         #online { background: #10b981; color: white; padding: 4px 10px; border-radius: 20px; font-size: 13px; font-weight: 600; }
 
-        /* Two-panel window layout */
         .app-container { display: flex; flex: 1; overflow: hidden; width: 100%; }
-        
-        /* Main stranger area */
         .chat-area { flex: 2; display: flex; flex-direction: column; border-right: 1px solid #2a2a30; background: #121214; }
-        
-        /* Friend management tab */
         .friends-sidebar { flex: 1; display: flex; flex-direction: column; background: #1a1a1e; padding: 15px; overflow-y: auto; }
         .sidebar-title { font-size: 15px; font-weight: bold; padding-bottom: 10px; border-bottom: 1px solid #2a2a30; color: #a1a1aa; }
 
@@ -68,8 +69,7 @@
         .btn-accept { background: #10b981; color: white; }
         .btn-deny { background: #ef4444; color: white; }
 
-        .friend-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; background: #2a2a30; border-radius: 10px; margin-top: 8px; border: 1px solid transparent; cursor: pointer; }
-        .friend-item:hover { border-color: #007bff; }
+        .friend-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; background: #2a2a30; border-radius: 10px; margin-top: 8px; border: 1px solid transparent; }
         .friend-badge { background: #007bff; color: white; padding: 2px 6px; border-radius: 10px; font-size: 11px; }
 
         #controls { padding: 15px; display: flex; gap: 10px; background: #1a1a1e; border-top: 1px solid #2a2a30; align-items: center; }
@@ -81,18 +81,25 @@
         
         .cam-btn { background: #10b981; color: white; padding: 10px; border-radius: 50%; width: 46px; height: 46px; display: flex; align-items: center; justify-content: center; font-size: 20px; cursor: pointer; flex-shrink: 0; position: relative; }
         .cam-btn.disabled { opacity: 0.4; pointer-events: none; }
-        
         #safety-overlay { display: none; position: absolute; font-size: 11px; background: rgba(0,0,0,0.8); width: 100%; height: 100%; border-radius: 50%; align-items: center; justify-content: center; color: #ff4757; }
     </style>
 </head>
 <body>
 
-    <div id="login-overlay">
-        <div class="login-card">
-            <h2 style="margin:0 0 10px 0;">⚡ Stranger Chat</h2>
-            <p style="color:#a1a1aa; font-size:14px; margin:0;">Grey-Black Professional Workspace</p>
-            <input type="text" id="nickname-input" placeholder="Enter Your Display Name..." maxlength="15" onkeypress="if(event.key==='Enter') submitLogin()">
-            <button onclick="submitLogin()">Sign In & Match</button>
+    <!-- AUTH SCREEN (SIGN IN / SIGN UP / GUEST) -->
+    <div id="auth-overlay">
+        <div class="auth-card" id="login-box">
+            <h2>⚡ Stranger Chat</h2>
+            <p id="auth-desc">Sign in to your private chat profile</p>
+            
+            <input type="text" id="username-input" placeholder="Enter Username..." maxlength="15">
+            <input type="password" id="password-input" placeholder="Enter Password...">
+            
+            <button class="btn-primary" onclick="handleAuth('login')">Sign In</button>
+            <button class="btn-secondary" onclick="handleAuth('signup')">Create Account</button>
+            
+            <div style="border-top: 1px solid #2a2a30; margin-top: 15px; padding-top: 5px;"></div>
+            <button class="btn-primary btn-guest" onclick="handleAuth('guest')">🚀 Play as Guest</button>
         </div>
     </div>
 
@@ -104,7 +111,7 @@
     <div class="app-container">
         <div class="chat-area">
             <div id="chat-box">
-                <div class="system">🔒 Grey-Black Theme Live. Real-time client AI safety filters deployed.</div>
+                <div class="system">🔒 Safe Mode Active. Automated client-side anti-nudity filters are live.</div>
             </div>
             
             <div id="controls">
@@ -120,9 +127,9 @@
         </div>
 
         <div class="friends-sidebar">
-            <div class="sidebar-title">👥 Friends & Direct Boxes</div>
+            <div class="sidebar-title">👥 Friends Box</div>
             <div id="friends-list">
-                <div style="color:#71717a; font-size:13px; margin-top:10px; font-style:italic;">No active safe friend nodes saved yet.</div>
+                <div style="color:#71717a; font-size:13px; margin-top:10px; font-style:italic;">No active friends saved yet.</div>
             </div>
         </div>
     </div>
@@ -142,47 +149,25 @@
         let myName = "";
         let nsfwModel = null;
 
-        // Pre-load content classification system on background thread
-        nsfwjs.load().then(model => {
-            nsfwModel = model;
-            console.log("Safety filter running.");
-        });
+        nsfwjs.load().then(model => { nsfwModel = model; });
 
-        function submitLogin() {
-            const input = document.getElementById('nickname-input').value.trim();
-            if (input) {
-                myName = input;
-                document.getElementById('username-display').innerText = `(${myName})`;
-                document.getElementById('login-overlay').style.display = 'none';
-                socket.emit('set_nickname', myName);
-            }
-        }
+        function handleAuth(type) {
+            const user = document.getElementById('username-input').value.trim();
+            const pass = document.getElementById('password-input').value.trim();
 
-        function addMsg(val, type, isImg=false) {
-            const d = document.createElement('div'); 
-            d.className = `msg ${type}`;
-            if(isImg) { 
-                const i = document.createElement('img'); i.src = val; d.appendChild(i); 
-            } else { 
-                d.innerText = val; 
-            }
-            box.appendChild(d); box.scrollTop = box.scrollHeight;
-        }
-
-        function addSystemElement(element) {
-            const d = document.createElement('div'); d.className = 'msg system'; d.appendChild(element); box.appendChild(d); box.scrollTop = box.scrollHeight;
-        }
-
-        function startSearch() { socket.emit('find_stranger'); }
-        function sendTxt() { 
-            if(msg.value.trim() && active) { addMsg(msg.value, 'you'); socket.emit('send_message', msg.value); msg.value=''; }
-        }
-
-        async function processImage(el) {
-            if(!active || !el.files || !el.files[0]) return;
-            
-            safetyOverlay.style.display = "flex";
-            const file = el.files[0];
-            const reader = new FileReader();
-            
-            reader.onload = async function(e) {
+            if (type === 'guest') {
+                myName = "Guest_" + Math.floor(1000 + Math.random() * 9000);
+                enterApp();
+            } else if (type === 'signup') {
+                if(!user || !pass) return alert("Please type a username and password.");
+                if(localStorage.getItem("chat_user_" + user)) return alert("Username already taken on this device.");
+                
+                localStorage.setItem("chat_user_" + user, pass);
+                myName = user + " 🛡️";
+                alert("Account created successfully!");
+                enterApp();
+            } else if (type === 'login') {
+                if(!user || !pass) return alert("Please type your login details.");
+                const savedPass = localStorage.getItem("chat_user_" + user);
+                
+                if(savedPass && savedPass === pass) {
