@@ -4,20 +4,22 @@ const { Server } = require('socket.io');
 
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server, {
-    maxHttpBufferSize: 1e7,
-    cors: { origin: "*" }
-});
+const io = new Server(server, { maxHttpBufferSize: 1e7, cors: { origin: "*" } });
 
 app.use(express.static(__dirname + '/public'));
 
 let waitingQueue = [];
 let activePairs = {}; 
+let userNames = {}; 
 let totalOnline = 0;
 
 io.on('connection', (socket) => {
     totalOnline++;
     io.emit('update_online_count', totalOnline);
+
+    socket.on('set_nickname', (name) => {
+        userNames[socket.id] = name || "Stranger";
+    });
 
     socket.on('find_stranger', () => {
         disconnectFromPartner(socket);
@@ -26,13 +28,33 @@ io.on('connection', (socket) => {
             if (io.sockets.sockets.get(partnerSocketId)) {
                 activePairs[socket.id] = partnerSocketId;
                 activePairs[partnerSocketId] = socket.id;
-                socket.emit('chat_start');
-                io.to(partnerSocketId).emit('chat_start');
+                
+                socket.emit('chat_start', { partnerName: userNames[partnerSocketId] || "Stranger" });
+                io.to(partnerSocketId).emit('chat_start', { partnerName: userNames[socket.id] || "Stranger" });
                 return;
             }
         }
         waitingQueue.push(socket.id);
         socket.emit('waiting');
+    });
+
+    socket.on('request_friend', () => {
+        let partnerId = activePairs[socket.id];
+        if (partnerId) io.to(partnerId).emit('friend_request_received');
+    });
+
+    socket.on('deny_friend', () => {
+        let partnerId = activePairs[socket.id];
+        if (partnerId) io.to(partnerId).emit('friend_request_denied');
+    });
+
+    socket.on('accept_friend', () => {
+        let partnerId = activePairs[socket.id];
+        if (partnerId) {
+            let code = "ID-" + Math.floor(1000 + Math.random() * 9000);
+            socket.emit('friend_match_success', { friendCode: code, friendName: userNames[partnerId] || "Stranger" });
+            io.to(partnerId).emit('friend_match_success', { friendCode: code, friendName: userNames[socket.id] || "Stranger" });
+        }
     });
 
     socket.on('send_message', (msg) => {
@@ -49,6 +71,7 @@ io.on('connection', (socket) => {
         totalOnline--;
         io.emit('update_online_count', totalOnline);
         disconnectFromPartner(socket);
+        delete userNames[socket.id];
     });
 });
 
@@ -63,4 +86,4 @@ function disconnectFromPartner(socket) {
 }
 
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+server.listen(PORT);
