@@ -1,11 +1,13 @@
-```javascript
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
 
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server, { maxHttpBufferSize: 1e7, cors: { origin: "*" } });
+const io = new Server(server, { 
+    maxHttpBufferSize: 1e7, 
+    cors: { origin: "*" } 
+});
 
 app.use(express.static(__dirname + '/public'));
 
@@ -41,12 +43,16 @@ io.on('connection', (socket) => {
 
     socket.on('request_friend', () => {
         let partnerId = activePairs[socket.id];
-        if (partnerId) io.to(partnerId).emit('friend_request_received');
+        if (partnerId) {
+            io.to(partnerId).emit('friend_request_received');
+        }
     });
 
     socket.on('deny_friend', () => {
         let partnerId = activePairs[socket.id];
-        if (partnerId) io.to(partnerId).emit('friend_request_denied');
+        if (partnerId) {
+            io.to(partnerId).emit('friend_request_denied');
+        }
     });
 
     socket.on('accept_friend', () => {
@@ -67,11 +73,10 @@ io.on('connection', (socket) => {
         let partnerId = activePairs[socket.id];
         if (!partnerId) return;
 
-        // Backend validation: Ensure data signature is a valid image type
-        if (imgData.includes("data:image/") && (imgData.includes("base64") || imgData.length < 5000000)) {
+        if (typeof imgData === 'string' && imgData.includes("data:image/")) {
             io.to(partnerId).emit('receive_image', imgData);
         } else {
-            socket.emit('safety_alert', "🛡️ System Block: Invalid or restricted file payload layout.");
+            socket.emit('safety_alert', "🛡️ System Block: Invalid file type layout.");
         }
     });
 
@@ -94,4 +99,4 @@ function disconnectFromPartner(socket) {
 }
 
 const PORT = process.env.PORT || 3000;
-server.listen(PORT);
+server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
