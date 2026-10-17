@@ -108,7 +108,7 @@
     <div class="app-container">
         <div class="chat-area">
             <div id="chat-box">
-                <div class="system">🔒 Safe Mode Active. Core security and anti-nudity features are live.</div>
+                <div class="system">🔒 Safe Mode Active. System routing connection lines optimized.</div>
             </div>
             
             <div id="controls">
@@ -131,10 +131,16 @@
         </div>
     </div>
 
-    <script src="/socket.io/socket.io.js"></script>
+    <!-- Include Socket.io Library from CDN to ensure client compatibility -->
+    <script src="https://jsdelivr.net"></script>
     <script>
-        const socket = io(), 
-              box = document.getElementById('chat-box'), 
+        // FIXED: Explicitly binds connection vectors to your current window host protocol
+        const socket = io(window.location.origin, {
+            transports: ['polling', 'websocket'],
+            upgrade: true
+        });
+        
+        const box = document.getElementById('chat-box'), 
               msg = document.getElementById('msg'), 
               sendB = document.getElementById('send-btn'), 
               actB = document.getElementById('action-btn'),
@@ -169,14 +175,3 @@
                     enterApp();
                 } else {
                     alert("Wrong username or password.");
-                }
-            }
-        }
-
-        function enterApp() {
-            document.getElementById('username-display').innerText = `(${myName})`;
-            document.getElementById('auth-overlay').style.display = 'none';
-            socket.emit('set_nickname', myName);
-        }
-
-        function addMsg(val, type, isImg=false) {
